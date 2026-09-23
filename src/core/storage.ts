@@ -1,0 +1,54 @@
+// 設定と量産防止の履歴。すべてこの端末の localStorage にだけ置く。
+// プライベートブラウズ等で localStorage が使えなくても画面は動くようにする。
+
+const SETTINGS_KEY = "qrd.settings.v1";
+const HISTORY_KEY = "qrd.history.v1";
+export const HISTORY_SIZE = 20;
+
+export interface Settings {
+  storeName: string;
+  placeId: string;
+  useClaude: boolean;
+  /** Claude モード用。説明者本人のキー。この端末の localStorage 以外には出さない */
+  apiKey: string;
+}
+
+export const DEFAULT_SETTINGS: Settings = { storeName: "", placeId: "", useClaude: false, apiKey: "" };
+
+function read<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function write(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // 保存できなくても続行する
+  }
+}
+
+export function loadSettings(): Settings {
+  return { ...DEFAULT_SETTINGS, ...read<Partial<Settings>>(SETTINGS_KEY, {}) };
+}
+
+export function saveSettings(s: Settings): void {
+  write(SETTINGS_KEY, s);
+}
+
+export function loadHistory(): string[] {
+  const h = read<unknown>(HISTORY_KEY, []);
+  return Array.isArray(h) ? h.filter((x): x is string => typeof x === "string").slice(0, HISTORY_SIZE) : [];
+}
+
+export function pushHistory(texts: string[]): void {
+  write(HISTORY_KEY, [...texts, ...loadHistory()].slice(0, HISTORY_SIZE));
+}
+
+export function clearHistory(): void {
+  write(HISTORY_KEY, []);
+}
