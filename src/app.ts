@@ -225,6 +225,7 @@ function viewDraft() {
     : `<p class="draft-text">${esc(text)}</p>`;
   return `${header()}
   <main class="page draft">
+    ${inAppBanner()}
     <h1 tabindex="-1">口コミの下書きができました</h1>
     <div class="draft-card ${st.editing ? "editing" : ""}">
       ${body}
@@ -238,9 +239,18 @@ function viewDraft() {
       <button class="btn ghost" data-act="edit">${st.editing ? "編集を終える" : "編集"}</button>
     </div>
     <button class="btn primary big" data-act="post" ${len(text) ? "" : "disabled"}>この内容で${esc(d.name)}に投稿する</button>
+    <p class="post-hint">押すと文章がコピーされ、${esc(d.name)}の投稿画面が開きます。<br>${pasteHint()}</p>
+    ${d.real ? "" : `<p class="fineprint">管理者ページで Google Place ID が未設定のため、Googleマップのトップが開きます（投稿画面は開きません）。</p>`}
     <p class="fineprint">AIが下書きを作成しました。実際のご体験に合うよう修正してください</p>
     <button class="text-btn center" data-act="redo">回答をやり直す</button>
   </main>`;
+}
+
+/** 投稿画面での貼り付け方。Android に「長押し」と出すと、目の前の貼り付け候補を無視させてしまう */
+function pasteHint() {
+  if (os === "ios") return "星を選び、入力欄をタップして「ペースト」してください。";
+  if (os === "android") return "星を選び、入力欄をタップして、キーボードの上に出てくる文章をタップしてください。";
+  return "星を選び、入力欄をクリックして貼り付けてください（Ctrl+V／Macは ⌘+V）。";
 }
 
 function pasteStep() {
@@ -289,6 +299,20 @@ function viewThanks() {
     <div class="thanks-mark" aria-hidden="true">✓</div>
     <h1 tabindex="-1">ご協力ありがとうございました</h1>
     <p class="muted">${esc(storeName())}</p>
+    ${
+      currentText().trim()
+        ? `<details class="again">
+      <summary>うまく貼り付けられなかったとき</summary>
+      <p>下の文章を長押ししてコピーするか、「もう一度コピーする」を押してください。</p>
+      <textarea class="fallback-text" readonly rows="6" aria-label="口コミの文章">${esc(currentText())}</textarea>
+      <div class="row">
+        <button class="btn ghost small" data-act="recopy">もう一度コピーする</button>
+        <button class="btn ghost small" data-act="open">${esc(dest().name)}を開く</button>
+      </div>
+      <p class="copied-note" role="status">${st.copy === "ok" ? "✓ コピーしました" : ""}</p>
+    </details>`
+        : ""
+    }
     <button class="text-btn center" data-act="restart">最初の画面にもどる</button>
   </main>`;
 }
@@ -384,24 +408,48 @@ async function makeDrafts() {
   go("draft");
 }
 
+/**
+ * 「この内容で◯◯に投稿する」。1回のタップで、コピー → 投稿画面を開く まで行う。
+ * iOS Safari はユーザー操作の同期処理の中でしかクリップボードと新しいタブを許さないので、
+ * await を挟まずに、コピーを先に済ませてから window.open する。
+ * 自動でコピーできない環境だけ、手でコピーしてもらう画面（handoff）を出す。
+ */
 function post() {
   const text = currentText().trim();
   if (!text) return;
-  st.copy = "pending";
-  st.opened = false;
-  st.wentHidden = false;
-  // ここで同期的にコピーする（await を先に挟まない）
-  copyText(text, (ok) => {
-    st.copy = ok ? "ok" : "fail";
-    if (st.screen === "handoff") render(false);
-  });
-  go("handoff");
+  if (!copyNow(text)) {
+    st.copy = "fail";
+    st.opened = false;
+    go("handoff");
+    return;
+  }
+  st.copy = "ok";
+  openDestination();
+}
+
+/** 同期的にコピーする。どちらかの方法でコピーを始められたら true */
+function copyNow(text: string): boolean {
+  let started = false;
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).catch(() => undefined);
+    started = true;
+  }
+  // 新しいタブに切り替わると非同期の書き込みが失敗することがあるので、同期のコピーも重ねる
+  return legacyCopy(text) || started;
 }
 
 function openDestination() {
   // 元ページを残して別タブで開く。戻ってきたことを visibilitychange で拾う
-  window.open(dest().url, "_blank", "noopener");
-  st.opened = true;
+  const url = dest().url;
+  const w = window.open(url, "_blank");
+  if (w) {
+    w.opener = null;
+    st.opened = true;
+    st.wentHidden = false;
+  } else {
+    // ポップアップが止められたら同じタブで開く（コピーは済んでいる）
+    location.href = url;
+  }
 }
 
 function onClick(e: MouseEvent) {
@@ -465,7 +513,9 @@ function onClick(e: MouseEvent) {
     case "recopy":
       copyText(currentText().trim(), (ok) => {
         st.copy = ok ? "ok" : "fail";
-        render(false);
+        const note = root.querySelector(".copied-note");
+        if (note) note.textContent = ok ? "✓ コピーしました" : "コピーできませんでした。文章を長押ししてコピーしてください";
+        else render(false);
       });
       break;
     case "backToDraft":
@@ -492,10 +542,11 @@ function onInput(e: Event) {
 }
 
 function onVisibility() {
-  if (st.screen !== "handoff" || !st.opened) return;
+  const waiting = st.screen === "draft" || st.screen === "handoff";
+  if (!waiting || !st.opened) return;
   if (document.visibilityState === "hidden") st.wentHidden = true;
   // 投稿フォームから戻ってきた。投稿できたかどうかは分からないので「ご協力ありがとうございました」
-  else if (st.wentHidden) setTimeout(() => st.screen === "handoff" && go("thanks"), 400);
+  else if (st.wentHidden) setTimeout(() => (st.screen === "draft" || st.screen === "handoff") && go("thanks"), 400);
 }
 
 /** トップから開くお客さま用ページ。この端末の管理者ページの設定を使う */

@@ -214,3 +214,10 @@ h2 { font-size: 15px; margin: 0 0 4px; }
 .entry-title { font-weight: 700; font-size: 18px; color: var(--accent); }
 .entry-title::after { content: " ›"; }
 .entry-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+/* ---- post hint / thanks fallback ---- */
+.post-hint { font-size: 13px; color: var(--text); background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; margin: 10px 0 0; line-height: 1.7; }
+.again { margin-top: 28px; width: 100%; text-align: left; font-size: 14px; }
+.again summary { cursor: pointer; color: var(--muted); text-align: center; }
+.again p { font-size: 13px; color: var(--muted); margin: 10px 0 8px; }
+.again .copied-note { color: var(--ok); margin: 6px 0 0; }
