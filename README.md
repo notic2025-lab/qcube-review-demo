@@ -3,8 +3,23 @@
 QRを読んだ来店客が4問のアンケートに答えると口コミの下書きが作られ、Googleの投稿フォームへ誘導される——その流れを見せる静的デモページ。
 
 - 公開: GitHub Pages（`main` への push で GitHub Actions がデプロイ）
-- 業種を指定して開く: `https://<user>.github.io/<repo>/#/restaurant`（ID は `survey-presets.json` の `categories[].id`）
 - 仕様と設計判断の理由: [PROMPT.md](PROMPT.md)
+
+## 2つのページ
+
+| ページ | URL | 使う人 |
+| --- | --- | --- |
+| お客さま用 | `https://<user>.github.io/<repo>/#s=...` | 来店客（QRから開く） |
+| 管理者 | `https://<user>.github.io/<repo>/admin/` | お店・デモの説明者 |
+
+サーバーも DB も無いので、**管理者ページで決めた設定（業種・店名・Google Place ID・アンケートの質問文と選択肢）は、お客さま用URLのハッシュ `#s=...` に圧縮して入れて渡す。**
+設定を変えると URL も変わる。Q-CUBE（可変QR）にはこの URL を登録する。
+
+- 管理者ページは編集中の内容をその端末の `localStorage` と自分の URL（`admin/#s=...`）に残す。URL を共有すれば別の端末でも続きを編集できる
+- お客さま用ページは URL から来た値を必ず検査する（業種 ID・Place ID の形式・文字数・制御文字・禁止語・選択肢の数）。直せない部分はひな形に戻す
+- 満足度・星の数を聞く質問文は管理者ページで作れない（レビューゲーティング防止）。「特にない」は Q4 の先頭に自動で付き、外せない
+- お客さまの回答や生成文は管理者からは見えない（サーバーが無いため）
+- 業種のひな形のまま試す: `https://<user>.github.io/<repo>/#/restaurant`（ID は `survey-presets.json` の `categories[].id`）
 
 ## 守っていること
 
@@ -35,4 +50,6 @@ npm run build
 | `src/core/template.ts` | テンプレート生成エンジン（語り口シード別） |
 | `src/core/generate.ts` | 3案の生成と作り直し |
 | `src/core/validate.ts` | 出力の検証（両モード共通） |
-| `src/app.ts` | 画面 |
+| `src/core/store-config.ts` | 店舗設定の検査・URL への変換（管理者 ↔ お客さま） |
+| `src/app.ts` | お客さま用ページ |
+| `src/admin/main.ts` | 管理者ページ（店舗設定・アンケート編集・URL と QR の発行） |

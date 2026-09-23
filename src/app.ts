@@ -1,13 +1,14 @@
-import { destinationFor, isValidPlaceId } from "./core/destination";
+import { destinationFor } from "./core/destination";
 import { generateDrafts } from "./core/engine";
 import type { Draft } from "./core/generate";
 import { detectInAppBrowser, detectOS, lineExternalUrl } from "./core/platform";
 import type { Answers, Category, Question } from "./core/presets";
-import { CATEGORIES, NONE_ID, findCategory } from "./core/presets";
-import type { Settings } from "./core/storage";
-import { HISTORY_SIZE, clearHistory, loadHistory, loadSettings, pushHistory, saveSettings } from "./core/storage";
+import { NONE_ID, findCategory } from "./core/presets";
+import { loadHistory, pushHistory } from "./core/storage";
+import { decodeStore, toCategory, tokenFromHash } from "./core/store-config";
 import { DEMO_STORES } from "./stores";
 
+// お客さま用ページ。お店の設定（店名・業種・投稿先・アンケート）は管理者ページが発行したURL（#s=...）から読む。
 // 画面は1枚。状態を持って描き直すだけのシンプルな状態遷移にしている。
 //
 // 設計上の前提（崩さないこと）:
@@ -15,10 +16,18 @@ import { DEMO_STORES } from "./stores";
 // - 満足度で導線を分岐させない（レビューゲーティング禁止）。何を選んでも同じ下書き画面・同じ投稿導線
 // - 投稿できたかは検知できない。完了画面は「ご協力ありがとうございました」
 
-type Screen = "home" | "intro" | "question" | "generating" | "draft" | "handoff" | "thanks";
+type Screen = "landing" | "invalid" | "intro" | "question" | "generating" | "draft" | "handoff" | "thanks";
+
+/** 開いているお店。管理者ページの URL から来るか、業種デモ（#/restaurant など）か */
+interface Store {
+  name: string;
+  cat: Category;
+  placeId: string;
+}
 
 interface State {
   screen: Screen;
+  store?: Store;
   cat?: Category;
   step: number;
   answers: Answers;
@@ -30,12 +39,11 @@ interface State {
   copy: "pending" | "ok" | "fail" | null;
   opened: boolean;
   wentHidden: boolean;
-  settingsOpen: boolean;
   busy: boolean;
 }
 
 const st: State = {
-  screen: "home",
+  screen: "landing",
   step: 0,
   answers: {},
   drafts: [],
@@ -45,10 +53,8 @@ const st: State = {
   copy: null,
   opened: false,
   wentHidden: false,
-  settingsOpen: false,
   busy: false,
 };
-let settings: Settings = loadSettings();
 const os = detectOS();
 const inApp = detectInAppBrowser();
 
@@ -59,15 +65,11 @@ let root: HTMLElement;
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-const storeName = () => settings.storeName.trim() || (st.cat ? DEMO_STORES[st.cat.id]?.name : "") || "デモ店舗";
-const dest = () => destinationFor(settings.placeId);
+const storeName = () => st.store?.name ?? "";
+const dest = () => destinationFor(st.store?.placeId ?? "");
 const currentText = () => st.texts[st.idx] ?? "";
 const len = (s: string) => [...s.trim()].length;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-function setHash(h: string) {
-  history.replaceState(null, "", `${location.pathname}${location.search}#/${h}`);
-}
 
 /**
  * クリップボードへコピー。
@@ -105,13 +107,11 @@ function legacyCopy(text: string): boolean {
 
 // ---- 画面 -------------------------------------------------------------------
 
-const gear = `<button class="icon-btn gear" data-act="settings" aria-label="デモ設定"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.4 1 2-3.4-2-1.6ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>`;
-
 function header(opts: { back?: boolean } = {}) {
   return `<header class="bar">
     ${opts.back ? `<button class="text-btn back" data-act="back">‹ もどる</button>` : `<span></span>`}
-    <span class="bar-store">${st.cat ? esc(storeName()) : ""}</span>
-    ${gear}
+    <span class="bar-store">${esc(storeName())}</span>
+    <span></span>
   </header>`;
 }
 
@@ -125,20 +125,20 @@ function inAppBanner() {
   </div>`;
 }
 
-function viewHome() {
-  const cards = CATEGORIES.map((c) => {
-    const s = DEMO_STORES[c.id];
-    return `<button class="cat-card" data-act="cat" data-id="${esc(c.id)}">
-      <span class="cat-mark" aria-hidden="true">${esc(s?.mark ?? "店")}</span>
-      <span class="cat-text"><span class="cat-label">${esc(c.label)}</span><span class="cat-store">${esc(s?.name ?? "")}</span></span>
-    </button>`;
-  }).join("");
-  return `<header class="bar"><span></span><span></span>${gear}</header>
-  <main class="page home">
-    <p class="eyebrow">デモ</p>
-    <h1 tabindex="-1">口コミ下書き生成</h1>
-    <p class="lead">QRを読んだお客さまが4つの質問に答えると、口コミの下書きができあがり、投稿画面へ案内されます。業種を選ぶと、その業種のデモ店舗で体験できます。</p>
-    <div class="cat-grid">${cards}</div>
+const adminHref = () => `${import.meta.env.BASE_URL}admin/`;
+
+function viewLanding() {
+  return `<main class="page landing">
+    <h1 tabindex="-1">お店のQRコードから開いてください</h1>
+    <p class="muted">このページは、お店に置いてあるQRコードを読み取ると、そのお店のアンケートが表示されます。</p>
+    <a class="text-btn center" href="${adminHref()}">お店の方はこちら（管理者ページ）</a>
+  </main>`;
+}
+
+function viewInvalid() {
+  return `<main class="page landing">
+    <h1 tabindex="-1">お店の情報を読み込めませんでした</h1>
+    <p class="muted">QRコードをもう一度読み取ってください。解決しない場合は、お店の方にお知らせください。</p>
   </main>`;
 }
 
@@ -150,7 +150,6 @@ function viewIntro() {
     <h1 tabindex="-1">4つの質問に答えるだけ。<br>口コミの文章は、AIがかわりに書きます</h1>
     <p class="muted">約30秒で終わります</p>
     <button class="btn primary big" data-act="start">はじめる</button>
-    <button class="text-btn center" data-act="home">業種をえらびなおす</button>
   </main>`;
 }
 
@@ -278,47 +277,16 @@ function viewThanks() {
     <div class="thanks-mark" aria-hidden="true">✓</div>
     <h1 tabindex="-1">ご協力ありがとうございました</h1>
     <p class="muted">${esc(storeName())}</p>
-    <button class="btn ghost" data-act="home">デモの最初にもどる</button>
+    <button class="text-btn center" data-act="restart">最初の画面にもどる</button>
   </main>`;
-}
-
-function viewSettings() {
-  if (!st.settingsOpen) return "";
-  const pid = settings.placeId.trim();
-  const pidState = !pid ? "" : isValidPlaceId(pid) ? `<p class="ok-note">投稿フォームを開きます</p>` : `<p class="err-note">Place ID の形式ではありません（マップのトップを開きます）</p>`;
-  return `<div class="sheet-backdrop" data-act="closeSettings"></div>
-  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-    <div class="sheet-head">
-      <h2 id="settings-title">デモ設定</h2>
-      <button class="icon-btn" data-act="closeSettings" aria-label="閉じる">×</button>
-    </div>
-    <p class="sheet-note">設定はこの端末のブラウザにだけ保存されます。</p>
-
-    <label class="field">
-      <span class="field-label">店名</span>
-      <input type="text" data-input="storeName" value="${esc(settings.storeName)}" placeholder="空欄なら「〇〇（デモ）」" autocomplete="off">
-    </label>
-
-    <label class="field">
-      <span class="field-label">投稿先：Google Place ID</span>
-      <input type="text" data-input="placeId" value="${esc(settings.placeId)}" placeholder="空欄ならGoogleマップのトップを開く" autocomplete="off" autocapitalize="off" spellcheck="false">
-      <span data-pid-state>${pidState}</span>
-      <p class="danger-note">実在する店舗のPlace IDを入れると、本当に口コミが投稿できてしまいます。投稿しても差し支えない場所を指定してください。</p>
-    </label>
-
-    <div class="field">
-      <span class="field-label">量産防止の履歴</span>
-      <p class="sheet-note">直近${HISTORY_SIZE}件の生成文と書き出しが重ならないようにしています（いま <span data-hist>${loadHistory().length}</span> 件）。</p>
-      <button class="btn ghost small" data-act="clearHistory">直近の生成文をクリア</button>
-    </div>
-  </section>`;
 }
 
 // ---- 描画 -------------------------------------------------------------------
 
 function render(focus = true) {
   const views: Record<Screen, () => string> = {
-    home: viewHome,
+    landing: viewLanding,
+    invalid: viewInvalid,
     intro: viewIntro,
     question: viewQuestion,
     generating: viewGenerating,
@@ -326,11 +294,9 @@ function render(focus = true) {
     handoff: viewHandoff,
     thanks: viewThanks,
   };
-  root.innerHTML = views[st.screen]() + viewSettings();
+  root.innerHTML = views[st.screen]();
   root.dataset.screen = st.screen;
-  if (st.settingsOpen) {
-    root.querySelector<HTMLInputElement>(".sheet input")?.focus({ preventScroll: true });
-  } else if (focus) {
+  if (focus) {
     root.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true });
     window.scrollTo(0, 0);
   }
@@ -343,19 +309,13 @@ function go(screen: Screen) {
 
 // ---- 操作 -------------------------------------------------------------------
 
-function startCategory(cat: Category) {
-  st.cat = cat;
+function openStore(store: Store) {
+  document.title = `${store.name}｜アンケート`;
+  st.store = store;
+  st.cat = store.cat;
   st.answers = {};
   st.step = 0;
-  setHash(cat.id);
-  go("intro");
-}
-
-function toHome() {
-  st.cat = undefined;
-  st.answers = {};
-  setHash("");
-  go("home");
+  st.screen = "intro";
 }
 
 function onOption(q: Question, id: string) {
@@ -400,7 +360,7 @@ async function makeDrafts() {
   const started = performance.now();
   // テンプレートモードでも少し待つ。即表示だとAIが書いたように見えない
   const minWait = 1100 + Math.random() * 700;
-  const res = await generateDrafts(cat, st.answers, settings, loadHistory());
+  const res = await generateDrafts(cat, st.answers, loadHistory());
   const rest = minWait - (performance.now() - started);
   if (rest > 0) await sleep(rest);
   if (st.screen !== "generating") return;
@@ -437,28 +397,10 @@ function onClick(e: MouseEvent) {
   if (!el || (el as HTMLButtonElement).disabled) return;
   const act = el.dataset.act;
   switch (act) {
-    case "settings":
-      st.settingsOpen = true;
-      render(false);
-      break;
-    case "closeSettings":
-      st.settingsOpen = false;
-      render(false);
-      break;
-    case "clearHistory": {
-      clearHistory();
-      const h = root.querySelector("[data-hist]");
-      if (h) h.textContent = "0";
-      el.textContent = "クリアしました";
-      break;
-    }
-    case "cat": {
-      const cat = findCategory(el.dataset.id ?? "");
-      if (cat) startCategory(cat);
-      break;
-    }
-    case "home":
-      toHome();
+    case "restart":
+      st.answers = {};
+      st.step = 0;
+      go("intro");
       break;
     case "start":
       st.step = 0;
@@ -532,24 +474,6 @@ function onInput(e: Event) {
     if (btn) btn.disabled = !len(el.value);
     return;
   }
-  if (key === "storeName" || key === "placeId") {
-    settings = { ...settings, [key]: el.value };
-    saveSettings(settings);
-    if (key === "placeId") {
-      const pid = el.value.trim();
-      const out = root.querySelector("[data-pid-state]");
-      if (out)
-        out.innerHTML = !pid
-          ? ""
-          : isValidPlaceId(pid)
-            ? `<p class="ok-note">投稿フォームを開きます</p>`
-            : `<p class="err-note">Place ID の形式ではありません（マップのトップを開きます）</p>`;
-    }
-    if (key === "storeName") {
-      const bar = root.querySelector(".bar-store");
-      if (bar && st.cat) bar.textContent = storeName();
-    }
-  }
 }
 
 function onVisibility() {
@@ -559,36 +483,41 @@ function onVisibility() {
   else if (st.wentHidden) setTimeout(() => st.screen === "handoff" && go("thanks"), 400);
 }
 
-/** #/restaurant のように業種を指定して開けば、その業種の入口から始まる（QRに直接載せられる） */
-function routeFromHash() {
+/**
+ * URL からお店を決める。
+ * - #s=... : 管理者ページが発行した店舗設定
+ * - #/restaurant など : 業種のデモ店舗（プリセットのまま）
+ */
+async function routeFromHash() {
+  const token = tokenFromHash(location.hash);
+  if (token) {
+    const d = await decodeStore(token);
+    if (!d) {
+      st.store = undefined;
+      st.screen = "invalid";
+      return;
+    }
+    openStore({ name: d.name || "こちらのお店", cat: toCategory(d), placeId: d.placeId });
+    return;
+  }
   const id = location.hash.replace(/^#\/?/, "");
   const cat = id ? findCategory(id) : undefined;
-  if (cat && cat !== st.cat) {
-    st.cat = cat;
-    st.answers = {};
-    st.step = 0;
-    st.screen = "intro";
-  } else if (!id) {
-    st.cat = undefined;
-    st.screen = "home";
+  if (cat) openStore({ name: DEMO_STORES[cat.id]?.name ?? "デモ店舗", cat, placeId: "" });
+  else {
+    st.store = undefined;
+    st.screen = "landing";
   }
 }
 
-export function mount(el: HTMLElement) {
+export async function mount(el: HTMLElement) {
   root = el;
-  routeFromHash();
+  await routeFromHash();
   root.addEventListener("click", onClick);
   root.addEventListener("input", onInput);
   document.addEventListener("visibilitychange", onVisibility);
-  window.addEventListener("hashchange", () => {
-    routeFromHash();
+  window.addEventListener("hashchange", async () => {
+    await routeFromHash();
     render();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && st.settingsOpen) {
-      st.settingsOpen = false;
-      render(false);
-    }
   });
   render();
 }

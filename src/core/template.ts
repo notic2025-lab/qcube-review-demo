@@ -22,33 +22,60 @@ export interface Ctx {
 
 // ---- 回答 → 言い回し ----------------------------------------------------
 
-// 辞書に無い選択肢（プリセットを編集した場合など）はラベルから機械的に作る
+// 辞書に無い選択肢（店舗が名前を変えた・足した選択肢）はラベルから作る。
+// ラベルの形はさまざまなので、どの形でも崩れにくい言い方に寄せる。
+/** 「〜い」「〜た」など用言で終わるラベル（「〜ところ」「〜のが」でつなげる） */
+const endsPredicate = (s: string) => /[いたるうくすつぬむぶぐだ]$/.test(s);
 const fallbackScene = (o: Option): ScenePhrase => ({
-  v: `{c}${o.label}で利用しました`,
+  v: `今回は${o.label}でした`,
   n: o.label,
   why: `${o.label}で`,
   who: `${o.label}を考えている方`,
 });
-const fallbackContext = (o: Option): ContextPhrase => ({ pre: "", s: `${o.label}での利用でした`, who: "同じように考えている方" });
-const fallbackGood = (o: Option): GoodPhrase => ({ a: `${o.label}と感じました`, te: `${o.label}と感じ`, n: `${o.label}ところ`, x: [], event: true });
-const fallbackConcern = (o: Option): ConcernPhrase => ({ a: `${o.label}と感じました`, n: `${o.label}点` });
+const fallbackContext = (o: Option): ContextPhrase => ({
+  pre: "",
+  s: /て$/.test(o.label) ? `${o.label}の来店でした` : endsPredicate(o.label) ? "" : `${o.label}での利用でした`,
+  who: "同じように考えている方",
+});
+function fallbackGood(o: Option): GoodPhrase {
+  const l = o.label;
+  const base = { x: [], event: true };
+  // 「きれい」「ていねい」は形容動詞なので形容詞の活用に入れない
+  if (/(きれい|キレイ|ていねい)$/.test(l)) return { ...base, a: `${l}でした`, te: `${l}で`, n: `${l}なところ` };
+  // 「雰囲気がいい」→ よかったです / よく
+  if (/いい$/.test(l)) return { ...base, a: `${l.slice(0, -2)}よかったです`, te: `${l.slice(0, -2)}よく`, n: `${l}ところ` };
+  // 「スープがおいしい」→ おいしかったです / おいしく（「〜たい」は除く）
+  if (/[^た]い$/.test(l)) return { ...base, a: `${l.slice(0, -1)}かったです`, te: `${l.slice(0, -1)}く`, n: `${l}ところ` };
+  if (endsPredicate(l)) return { ...base, a: `${l}と感じました`, te: `${l}と感じ`, n: `${l}ところ` };
+  // 「スタッフが親切」「麺がもちもち」
+  return { ...base, a: `${l}でした`, te: `${l}で`, n: `${l}なところ` };
+}
+const fallbackConcern = (o: Option): ConcernPhrase =>
+  endsPredicate(o.label)
+    ? { a: `${o.label}のが少し気になりました`, n: `${o.label}点` }
+    : { a: `${o.label}が少し気になりました`, n: o.label };
 const EMPTY_CATEGORY: CategoryPhrases = { place: "こちら", noun: "お店", entering: "お店に入ると", scene: {}, context: {}, good: {}, concern: {} };
+
+/** 辞書の言い回しを使えるか（店舗が名前を変えた選択肢はラベル優先） */
+function phraseOf<T>(dict: Record<string, T>, o: Option, fallback: (o: Option) => T): T {
+  return (!o.useLabel && dict[o.id]) || fallback(o);
+}
 
 export function buildCtx(cat: Category, answers: Answers, r: Rng): Ctx {
   const p = PHRASES[cat.id] ?? EMPTY_CATEGORY;
   const res = resolveAnswers(cat, answers);
   const so = res.scene.options[0];
   const co = res.context.options[0];
-  const s = so ? (p.scene[so.id] ?? fallbackScene(so)) : { v: "{c}利用しました", n: "利用", why: "今回", who: "気になっている方" };
-  const c = co ? (p.context[co.id] ?? fallbackContext(co)) : { pre: "", s: "", who: "気になっている方" };
-  const all = res.good.options.map((o) => p.good[o.id] ?? fallbackGood(o));
+  const s = so ? phraseOf(p.scene, so, fallbackScene) : { v: "{c}利用しました", n: "利用", why: "今回", who: "気になっている方" };
+  const c = co ? phraseOf(p.context, co, fallbackContext) : { pre: "", s: "", who: "気になっている方" };
+  const all = res.good.options.map((o) => phraseOf(p.good, o, fallbackGood));
   return {
     p,
     s,
     c,
     goods: all.filter((x) => x.tag !== "closing"),
     closers: all.filter((x) => x.tag === "closing"),
-    concerns: res.concern.options.map((o) => p.concern[o.id] ?? fallbackConcern(o)),
+    concerns: res.concern.options.map((o) => phraseOf(p.concern, o, fallbackConcern)),
     r,
   };
 }
@@ -73,7 +100,7 @@ function visit(k: Ctx): Sent[] {
   }
   const out = pick(r, variants).map((x) => ({ ...x }));
   const prefix = pick(r, ["", "", "先日、", "今回、", "この前、"]);
-  if (!out[0].t.includes(prefix.slice(0, 2))) out[0].t = prefix + out[0].t;
+  if (!out[0].t.startsWith("今回") && !out[0].t.includes(prefix.slice(0, 2))) out[0].t = prefix + out[0].t;
   return out;
 }
 

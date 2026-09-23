@@ -201,3 +201,7 @@ h2 { font-size: 15px; margin: 0 0 4px; }
 .err-note { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
 .toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .toggle input { width: 22px; height: 22px; accent-color: var(--accent); }
+
+/* ---- landing ---- */
+.landing { justify-content: center; text-align: center; padding-bottom: 16vh; }
+.landing .text-btn { margin-top: 24px; text-decoration: underline; }

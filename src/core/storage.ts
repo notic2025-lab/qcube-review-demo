@@ -1,21 +1,10 @@
-// 設定と量産防止の履歴。すべてこの端末の localStorage にだけ置く。
+// 量産防止の履歴と管理者ページの編集中の設定。すべてこの端末の localStorage にだけ置く。
 // プライベートブラウズ等で localStorage が使えなくても画面は動くようにする。
 
-const SETTINGS_KEY = "qrd.settings.v1";
 const HISTORY_KEY = "qrd.history.v1";
 export const HISTORY_SIZE = 20;
 
-export interface Settings {
-  storeName: string;
-  placeId: string;
-  useClaude: boolean;
-  /** Claude モード用。説明者本人のキー。この端末の localStorage 以外には出さない */
-  apiKey: string;
-}
-
-export const DEFAULT_SETTINGS: Settings = { storeName: "", placeId: "", useClaude: false, apiKey: "" };
-
-function read<T>(key: string, fallback: T): T {
+export function read<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
     return raw ? (JSON.parse(raw) as T) : fallback;
@@ -24,20 +13,12 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
-function write(key: string, value: unknown): void {
+export function write(key: string, value: unknown): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
     // 保存できなくても続行する
   }
-}
-
-export function loadSettings(): Settings {
-  return { ...DEFAULT_SETTINGS, ...read<Partial<Settings>>(SETTINGS_KEY, {}) };
-}
-
-export function saveSettings(s: Settings): void {
-  write(SETTINGS_KEY, s);
 }
 
 export function loadHistory(): string[] {

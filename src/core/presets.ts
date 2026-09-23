@@ -9,6 +9,8 @@ export interface Option {
   id: string;
   label: string;
   exclusive?: boolean;
+  /** 店舗が名前を変えた・足した選択肢。言い回し辞書を使わずラベルから文章を作る */
+  useLabel?: boolean;
 }
 
 export interface Question {
