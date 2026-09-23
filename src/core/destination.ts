@@ -10,15 +10,19 @@ export interface Destination {
 
 const PLACE_ID = /^[A-Za-z0-9_-]{10,}$/;
 
+/**
+ * デモの投稿先（依頼者の指定: 鈴与商事㈱）。管理者ページで Place ID を入れなければこれが使われる。
+ * 本物の投稿フォームが開く。押しただけでは投稿されないが、本人が「投稿」を押せば実際に載る。
+ */
+export const DEMO_PLACE_ID = "ChIJe_RRuvlJGmARhwimiSBHBOo";
+export const DEMO_PLACE_NAME = "鈴与商事㈱";
+
 export function isValidPlaceId(id: string): boolean {
   return PLACE_ID.test(id.trim());
 }
 
 export function destinationFor(placeId: string): Destination {
-  const id = placeId.trim();
-  if (isValidPlaceId(id)) {
-    return { name: "Google", url: `https://search.google.com/local/writereview?placeid=${encodeURIComponent(id)}`, real: true };
-  }
-  // マップのトップが開くだけ。投稿はされない
-  return { name: "Google", url: "https://www.google.com/maps", real: false };
+  const id = isValidPlaceId(placeId.trim()) ? placeId.trim() : DEMO_PLACE_ID;
+  // Googleマップの「クチコミを投稿」ダイアログ（星と入力欄）が開く
+  return { name: "Google", url: `https://search.google.com/local/writereview?placeid=${encodeURIComponent(id)}`, real: true };
 }

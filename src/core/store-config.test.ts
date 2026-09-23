@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEMO_PLACE_ID } from "./destination";
 import { generateTemplateDrafts } from "./generate";
 import { NONE_ID, QUESTION_ORDER } from "./presets";
 import { seededRng } from "./rng";
@@ -137,7 +138,7 @@ describe("URL から来た値の無害化", () => {
     })!;
     expect(d.name).not.toContain("\u0000");
     expect([...d.name].length).toBe(40);
-    expect(d.placeId).toBe("");
+    expect(d.placeId).toBe(DEMO_PLACE_ID);
     expect(d.questions.scene.label).toBe("何を召し上がりましたか？");
     expect(d.questions.scene.options).toEqual([{ label: "とても満足" }, { label: "ふつう" }, { presetId: "lunch", label: "ランチ" }]);
   });

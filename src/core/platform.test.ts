@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { destinationFor } from "./destination";
+import { DEMO_PLACE_ID, destinationFor } from "./destination";
 import { detectInAppBrowser, detectOS, lineExternalUrl } from "./platform";
 
 const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
@@ -27,9 +27,10 @@ describe("platform", () => {
 });
 
 describe("destination", () => {
-  it("Place ID が無ければマップのトップ", () => {
-    expect(destinationFor("")).toEqual({ name: "Google", url: "https://www.google.com/maps", real: false });
-    expect(destinationFor("abc")).toMatchObject({ real: false });
+  it("Place ID が無ければデモの投稿先の投稿フォーム", () => {
+    const demo = `https://search.google.com/local/writereview?placeid=${DEMO_PLACE_ID}`;
+    expect(destinationFor("")).toEqual({ name: "Google", url: demo, real: true });
+    expect(destinationFor("abc").url).toBe(demo);
   });
   it("Place ID があれば投稿フォーム", () => {
     const d = destinationFor(" ChIJN1t_tDeuEmsRUsoyG83frY4 ");
@@ -37,6 +38,6 @@ describe("destination", () => {
     expect(d.real).toBe(true);
   });
   it("Place ID に URL を混ぜられない", () => {
-    expect(destinationFor("abc&x=https://evil.example").real).toBe(false);
+    expect(destinationFor("abc&x=https://evil.example").url).not.toContain("evil");
   });
 });

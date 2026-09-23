@@ -1,4 +1,4 @@
-import { isValidPlaceId } from "./destination";
+import { DEMO_PLACE_ID, isValidPlaceId } from "./destination";
 import type { Category, Option, QuestionId } from "./presets";
 import { CATEGORIES, NONE_ID, QUESTION_ORDER, findCategory } from "./presets";
 import { read, write } from "./storage";
@@ -59,7 +59,7 @@ export function draftFromPreset(catId: string, name = ""): StoreDraft {
       options: q.options.filter((o) => o.id !== NONE_ID).map((o) => ({ presetId: o.id, label: o.label })),
     };
   }
-  return { cat: cat.id, name, placeId: "", questions };
+  return { cat: cat.id, name, placeId: DEMO_PLACE_ID, questions };
 }
 
 export function resetQuestion(d: StoreDraft, qid: QuestionId): StoreDraft {
@@ -97,7 +97,7 @@ export function checkStore(d: StoreDraft): Issue[] {
   if (!d.name.trim()) err("name", "店名を入れてください");
   const pid = d.placeId.trim();
   if (pid && !isValidPlaceId(pid)) {
-    out.push({ path: "placeId", message: "Place ID の形式ではありません。このままだとGoogleマップのトップが開きます", level: "warn" });
+    out.push({ path: "placeId", message: "Place ID の形式ではありません。このままだとデモの投稿先が開きます", level: "warn" });
   }
   for (const qid of QUESTION_ORDER) {
     const q = d.questions[qid];
@@ -164,7 +164,8 @@ interface Payload {
 export function toPayload(d: StoreDraft): Payload {
   const base = draftFromPreset(d.cat);
   const p: Payload = { v: 1, c: d.cat, n: d.name.trim() };
-  if (d.placeId.trim()) p.p = d.placeId.trim();
+  // デモの投稿先はURLに入れない（読み込み側の既定値と同じなので）
+  if (d.placeId.trim() && d.placeId.trim() !== DEMO_PLACE_ID) p.p = d.placeId.trim();
   for (const qid of QUESTION_ORDER) {
     if (!isQuestionEdited(d, qid)) continue;
     const cur = d.questions[qid];
@@ -186,7 +187,7 @@ export function fromPayload(raw: unknown): StoreDraft | null {
   if (p.v !== 1 || typeof p.c !== "string" || !findCategory(p.c)) return null;
   const d = draftFromPreset(p.c, clean(p.n, LIMITS.name));
   const pid = clean(p.p, 200);
-  d.placeId = isValidPlaceId(pid) ? pid : "";
+  d.placeId = isValidPlaceId(pid) ? pid : DEMO_PLACE_ID;
   const qs = p.q && typeof p.q === "object" ? p.q : {};
   for (const qid of QUESTION_ORDER) {
     const pq = (qs as Record<string, unknown>)[qid] as PayloadQuestion | undefined;

@@ -33,3 +33,20 @@ export function pushHistory(texts: string[]): void {
 export function clearHistory(): void {
   write(HISTORY_KEY, []);
 }
+
+// Claude モードの設定。API キーはこの端末の localStorage にだけ置く（URL・リポジトリ・ログに出さない）
+const AI_KEY = "qrd.ai.v1";
+
+export interface AiSettings {
+  enabled: boolean;
+  apiKey: string;
+}
+
+export function loadAiSettings(): AiSettings {
+  const s = read<Partial<AiSettings>>(AI_KEY, {});
+  return { enabled: s.enabled === true, apiKey: typeof s.apiKey === "string" ? s.apiKey : "" };
+}
+
+export function saveAiSettings(s: AiSettings): void {
+  write(AI_KEY, s);
+}

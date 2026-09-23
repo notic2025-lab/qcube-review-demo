@@ -154,7 +154,8 @@ h2 { font-size: 15px; margin: 0 0 4px; }
 .draft-card.editing { border-color: var(--accent); }
 .draft-text { margin: 0; font-size: 16px; line-height: 1.9; white-space: pre-wrap; word-break: break-word; }
 .draft-edit { width: 100%; border: 0; background: transparent; resize: vertical; line-height: 1.9; font-size: 16px; padding: 0; outline: none; min-height: 200px; }
-.draft-meta { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.draft-meta { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.draft-meta .mode { margin-left: auto; opacity: 0.8; }
 
 /* ---- handoff ---- */
 .copied { margin: 4px 0 8px; font-weight: 700; font-size: 17px; color: var(--muted); }

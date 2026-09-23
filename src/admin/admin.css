@@ -59,3 +59,9 @@
 .jump-link { margin-top: 10px; }
 .top-link { display: inline-block; font-size: 14px; color: var(--muted); text-decoration: none; margin-bottom: 8px; }
 @media (min-width: 900px) { .jump-link { display: none; } }
+.admin-side .card + .card { margin-top: 0; }
+.toggle.field { display: flex; align-items: center; justify-content: space-between; }
+.toggle.field .field-label { margin: 0; }
+.ai-result { margin-top: 12px; }
+.ai-drafts { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 10px; font-size: 14px; line-height: 1.8; }
+.ai-drafts small { display: block; color: var(--muted); font-size: 11px; }

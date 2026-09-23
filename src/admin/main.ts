@@ -1,9 +1,12 @@
 import "../style.css";
 import "./admin.css";
-import { isValidPlaceId } from "../core/destination";
+import { DEMO_PLACE_ID, DEMO_PLACE_NAME, isValidPlaceId } from "../core/destination";
 import type { QuestionId } from "../core/presets";
 import { CATEGORIES, QUESTION_ORDER, findCategory } from "../core/presets";
-import { clearHistory, loadHistory } from "../core/storage";
+import { CLAUDE_MODEL, ClaudeError, generateClaudeDrafts } from "../core/claude";
+import type { Answers } from "../core/presets";
+import type { AiSettings } from "../core/storage";
+import { clearHistory, loadAiSettings, loadHistory, saveAiSettings } from "../core/storage";
 import type { Issue, StoreDraft } from "../core/store-config";
 import {
   LIMITS,
@@ -16,6 +19,7 @@ import {
   resetQuestion,
   saveStore,
   storeUrl,
+  toCategory,
   tokenFromHash,
 } from "../core/store-config";
 import { DEMO_STORES } from "../stores";
@@ -37,6 +41,7 @@ const QMETA: Record<QuestionId, { no: number; role: string; kind: string }> = {
 };
 
 let d: StoreDraft;
+let ai: AiSettings = loadAiSettings();
 let root: HTMLElement;
 let url = "";
 let svg = "";
@@ -83,9 +88,9 @@ function viewStore() {
     </label>
     <label class="field">
       <span class="field-label">投稿先：Google Place ID</span>
-      <input type="text" data-bind="placeId" value="${esc(d.placeId)}" placeholder="空欄ならGoogleマップのトップを開く" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <input type="text" data-bind="placeId" value="${esc(d.placeId)}" placeholder="空欄ならデモの投稿先（${DEMO_PLACE_NAME}）" autocomplete="off" autocapitalize="off" spellcheck="false">
       <span class="issue" data-issue="placeId"></span>
-      <span class="field-help"><a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener">Place ID の調べ方</a>。入れると、お客さまの「Googleを開く」で口コミの投稿フォームが開きます。</span>
+      <span class="field-help">${d.placeId.trim() === DEMO_PLACE_ID ? `いまはデモの投稿先（${DEMO_PLACE_NAME}）です。` : ""}<a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener">Place ID の調べ方</a>。入れると、お客さまの「Googleを開く」で口コミの投稿フォームが開きます。</span>
       <p class="danger-note">実在する店舗のPlace IDを入れると、本当に口コミが投稿できてしまいます。投稿しても差し支えない場所を指定してください。</p>
     </label>
   </section>`;
@@ -129,6 +134,57 @@ function viewQuestion(qid: QuestionId) {
       </div>
     </div>
   </section>`;
+}
+
+function viewAi() {
+  return `<section class="card" aria-labelledby="h-ai">
+    <h2 id="h-ai">AI生成（Claude Haiku 4.5）</h2>
+    <p class="field-help">オンにすると、<strong>この端末で</strong>お客さま画面を開いたときに Claude が下書きを書きます。オフのとき・キーが無いとき・失敗したときは、テンプレートで作ります。</p>
+    <label class="toggle field">
+      <span class="field-label">Claude で文章を作る</span>
+      <input type="checkbox" data-ai="enabled" ${ai.enabled ? "checked" : ""}>
+    </label>
+    <label class="field">
+      <span class="field-label">Anthropic APIキー</span>
+      <input type="password" data-ai="apiKey" placeholder="sk-ant-…" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </label>
+    <p class="danger-note">キーはこの端末のブラウザにだけ保存されます。共有端末では使わないでください。</p>
+    <p class="field-help">キーはお客さま用URLには入りません。お客さまのスマホで開いたときはテンプレートで作られます。</p>
+    <div class="row">
+      <button class="btn small" data-act="aiTest">試しに作ってみる</button>
+      <button class="btn ghost small" data-act="aiClear">キーを消す</button>
+    </div>
+    <div class="ai-result" data-ai-result aria-live="polite"></div>
+  </section>`;
+}
+
+/** 管理者ページの回答例（各設問の先頭の選択肢）で Claude に3案作らせる */
+async function aiTest(btn: HTMLButtonElement) {
+  const out = root.querySelector<HTMLElement>("[data-ai-result]")!;
+  if (!ai.apiKey.trim()) {
+    out.innerHTML = `<p class="issue">APIキーを入れてください</p>`;
+    return;
+  }
+  const cat = toCategory(d);
+  const [q1, q2, q3, q4] = cat.questions;
+  const answers: Answers = {
+    scene: [q1.options[0].id],
+    context: [q2.options[0].id],
+    good: q3.options.slice(0, 2).map((o) => o.id),
+    concern: [q4.options[1].id],
+  };
+  btn.disabled = true;
+  out.innerHTML = `<p class="muted small">${esc(CLAUDE_MODEL)} で作っています…</p>`;
+  try {
+    const drafts = await generateClaudeDrafts(cat, answers, { apiKey: ai.apiKey.trim(), storeName: d.name, history: [] });
+    const labels = [q1.options[0].label, q2.options[0].label, ...q3.options.slice(0, 2).map((o) => o.label), `気になった: ${q4.options[1].label}`];
+    out.innerHTML = `<p class="ok-note">接続できました。回答例: ${esc(labels.join(" / "))}</p>
+      <ol class="ai-drafts">${drafts.map((x) => `<li>${esc(x.text)}<small>${[...x.text].length}字</small></li>`).join("")}</ol>`;
+  } catch (e) {
+    out.innerHTML = `<p class="issue">${esc(e instanceof ClaudeError ? e.message : "作れませんでした")}</p>`;
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function viewPanel() {
@@ -196,8 +252,10 @@ function render() {
         <button class="btn ghost small" data-act="clearHistory">履歴をクリア</button>
       </section>
     </div>
-    <aside class="admin-side">${viewPanel()}</aside>
+    <aside class="admin-side">${viewPanel()}${viewAi()}</aside>
   </div>`;
+  const key = root.querySelector<HTMLInputElement>('[data-ai="apiKey"]');
+  if (key) key.value = ai.apiKey;
   void update();
 }
 
@@ -349,6 +407,19 @@ async function onClick(e: MouseEvent) {
     case "svg":
       if (url) saveBlob(new Blob([svg], { type: "image/svg+xml" }), `qr-${d.cat}.svg`);
       break;
+    case "aiTest":
+      await aiTest(el as HTMLButtonElement);
+      break;
+    case "aiClear": {
+      ai = { enabled: false, apiKey: "" };
+      saveAiSettings(ai);
+      const key = root.querySelector<HTMLInputElement>('[data-ai="apiKey"]');
+      if (key) key.value = "";
+      const on = root.querySelector<HTMLInputElement>('[data-ai="enabled"]');
+      if (on) on.checked = false;
+      root.querySelector("[data-ai-result]")!.innerHTML = `<p class="ok-note">キーを消しました</p>`;
+      break;
+    }
     case "toPanel":
       root.querySelector(".panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
       break;
@@ -364,6 +435,11 @@ async function onClick(e: MouseEvent) {
 
 function onInput(e: Event) {
   const el = e.target as HTMLInputElement;
+  if (el.dataset.ai) {
+    ai = el.dataset.ai === "enabled" ? { ...ai, enabled: el.checked } : { ...ai, apiKey: el.value.trim() };
+    saveAiSettings(ai);
+    return;
+  }
   if (el.dataset.bind) {
     setByPath(el.dataset.bind, el.value);
     updateSoon();

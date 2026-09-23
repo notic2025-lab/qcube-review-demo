@@ -40,6 +40,9 @@ interface State {
   opened: boolean;
   wentHidden: boolean;
   busy: boolean;
+  /** 下書きをどちらで作ったか（デモで見比べるための表示） */
+  mode?: "template" | "claude";
+  fallbackReason?: string;
 }
 
 const st: State = {
@@ -231,6 +234,7 @@ function viewDraft() {
       ${body}
       <div class="draft-meta">
         <span class="count" data-count>${len(text)}字</span>
+        <span class="mode" title="${esc(st.fallbackReason ?? "")}">${st.mode === "claude" ? "Claude" : st.fallbackReason ? "テンプレート（AIに接続できず）" : "テンプレート"}</span>
         ${n > 1 ? `<span class="variant">${st.idx + 1} / ${n}</span>` : ""}
       </div>
     </div>
@@ -240,7 +244,6 @@ function viewDraft() {
     </div>
     <button class="btn primary big" data-act="post" ${len(text) ? "" : "disabled"}>この内容で${esc(d.name)}に投稿する</button>
     <p class="post-hint">押すと文章がコピーされ、${esc(d.name)}の投稿画面が開きます。<br>${pasteHint()}</p>
-    ${d.real ? "" : `<p class="fineprint">管理者ページで Google Place ID が未設定のため、Googleマップのトップが開きます（投稿画面は開きません）。</p>`}
     <p class="fineprint">AIが下書きを作成しました。実際のご体験に合うよう修正してください</p>
     <button class="text-btn center" data-act="redo">回答をやり直す</button>
   </main>`;
@@ -396,13 +399,15 @@ async function makeDrafts() {
   const started = performance.now();
   // テンプレートモードでも少し待つ。即表示だとAIが書いたように見えない
   const minWait = 1100 + Math.random() * 700;
-  const res = await generateDrafts(cat, st.answers, loadHistory());
+  const res = await generateDrafts(cat, st.answers, loadHistory(), storeName());
   const rest = minWait - (performance.now() - started);
   if (rest > 0) await sleep(rest);
   if (st.screen !== "generating") return;
   pushHistory(res.drafts.map((d) => d.text));
   st.drafts = res.drafts;
   st.texts = res.drafts.map((d) => d.text);
+  st.mode = res.mode;
+  st.fallbackReason = res.fallbackReason;
   st.idx = 0;
   st.editing = false;
   go("draft");
