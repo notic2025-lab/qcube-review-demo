@@ -1,0 +1,1252 @@
+{
+  "version": 2,
+  "note": "業種別アンケートの初期テンプレート。店舗はこれを土台に編集する。設計方針は 03_survey_presets.md を参照。",
+  "noneOption": {
+    "id": "none",
+    "label": "特にない",
+    "exclusive": true,
+    "note": "気になったところの設問の先頭に必ず付与する。選ぶと他の選択を外して即座に次へ進む。"
+  },
+  "questionRoles": {
+    "q1": "何を利用したか。具体的な名詞を取り、AIに固有の素材を渡す",
+    "q2": "どんな状況だったか。来店の文脈を取り、文章に自然さを与える",
+    "q3": "よかったところ（複数選択・最大3つ）",
+    "q4": "気になったところ（複数選択・最大2つ）。口コミとして自然にするために必ず聞く"
+  },
+  "categories": [
+    {
+      "id": "restaurant",
+      "label": "飲食店（レストラン・カフェ）",
+      "questions": [
+        {
+          "id": "scene",
+          "type": "single",
+          "label": "何を召し上がりましたか？",
+          "options": [
+            {
+              "id": "lunch",
+              "label": "ランチ"
+            },
+            {
+              "id": "dinner",
+              "label": "ディナー"
+            },
+            {
+              "id": "cafe",
+              "label": "カフェ利用"
+            },
+            {
+              "id": "takeout",
+              "label": "テイクアウト"
+            },
+            {
+              "id": "course",
+              "label": "コース・宴会"
+            },
+            {
+              "id": "drink",
+              "label": "お茶・軽食だけ"
+            }
+          ]
+        },
+        {
+          "id": "context",
+          "type": "single",
+          "label": "どなたと来られましたか？",
+          "options": [
+            {
+              "id": "alone",
+              "label": "ひとり"
+            },
+            {
+              "id": "family",
+              "label": "家族"
+            },
+            {
+              "id": "friend",
+              "label": "友人"
+            },
+            {
+              "id": "couple",
+              "label": "恋人・夫婦"
+            },
+            {
+              "id": "work",
+              "label": "仕事関係"
+            },
+            {
+              "id": "kids",
+              "label": "子ども連れ"
+            }
+          ]
+        },
+        {
+          "id": "good",
+          "type": "multi",
+          "label": "よかったところは？",
+          "maxSelect": 3,
+          "options": [
+            {
+              "id": "taste",
+              "label": "料理がおいしい"
+            },
+            {
+              "id": "fresh",
+              "label": "素材が新鮮"
+            },
+            {
+              "id": "volume",
+              "label": "ボリュームがある"
+            },
+            {
+              "id": "menu",
+              "label": "メニューが豊富"
+            },
+            {
+              "id": "service",
+              "label": "接客がていねい"
+            },
+            {
+              "id": "speed",
+              "label": "提供が早い"
+            },
+            {
+              "id": "atmosphere",
+              "label": "雰囲気がいい"
+            },
+            {
+              "id": "clean",
+              "label": "清潔感がある"
+            },
+            {
+              "id": "value",
+              "label": "値段のわりに満足"
+            },
+            {
+              "id": "seat",
+              "label": "席がゆったりしている"
+            },
+            {
+              "id": "kidsfriendly",
+              "label": "子ども連れでも過ごしやすい"
+            },
+            {
+              "id": "revisit",
+              "label": "また来たい"
+            }
+          ]
+        },
+        {
+          "id": "concern",
+          "type": "multi",
+          "label": "気になったところは？",
+          "maxSelect": 2,
+          "options": [
+            {
+              "id": "wait",
+              "label": "待ち時間が長かった"
+            },
+            {
+              "id": "noisy",
+              "label": "少し騒がしかった"
+            },
+            {
+              "id": "narrow",
+              "label": "席がやや狭かった"
+            },
+            {
+              "id": "taste_miss",
+              "label": "味が好みと少し違った"
+            },
+            {
+              "id": "price",
+              "label": "値段が思ったより高かった"
+            },
+            {
+              "id": "slow",
+              "label": "注文から提供まで時間がかかった"
+            },
+            {
+              "id": "temp",
+              "label": "店内の温度が気になった"
+            },
+            {
+              "id": "call",
+              "label": "呼んでも気づかれにくかった"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "izakaya",
+      "label": "居酒屋・バー",
+      "questions": [
+        {
+          "id": "scene",
+          "type": "single",
+          "label": "どんなご利用でしたか？",
+          "options": [
+            {
+              "id": "after_work",
+              "label": "仕事帰りに一杯"
+            },
+            {
+              "id": "party",
+              "label": "飲み会・宴会"
+            },
+            {
+              "id": "date",
+              "label": "デート"
+            },
+            {
+              "id": "alone",
+              "label": "ひとり飲み"
+            },
+            {
+              "id": "second",
+              "label": "二次会"
+            },
+            {
+              "id": "meal",
+              "label": "食事メイン"
+            }
+          ]
+        },
+        {
+          "id": "context",
+          "type": "single",
+          "label": "何が目当てでしたか？",
+          "options": [
+            {
+              "id": "food",
+              "label": "料理"
+            },
+            {
+              "id": "drink",
+              "label": "お酒の種類"
+            },
+            {
+              "id": "seasonal",
+              "label": "季節のメニュー"
+            },
+            {
+              "id": "seat",
+              "label": "席・個室"
+            },
+            {
+              "id": "staff",
+              "label": "店員さん"
+            },
+            {
+              "id": "price",
+              "label": "価格帯"
+            }
+          ]
+        },
+        {
+          "id": "good",
+          "type": "multi",
+          "label": "よかったところは？",
+          "maxSelect": 3,
+          "options": [
+            {
+              "id": "taste",
+              "label": "料理がおいしい"
+            },
+            {
+              "id": "drink_variety",
+              "label": "お酒が豊富"
+            },
+            {
+              "id": "seasonal",
+              "label": "季節感がある"
+            },
+            {
+              "id": "atmosphere",
+              "label": "居心地がいい"
+            },
+            {
+              "id": "value",
+              "label": "安くて満足"
+            },
+            {
+              "id": "service",
+              "label": "接客がよかった"
+            },
+            {
+              "id": "private",
+              "label": "個室でゆっくりできた"
+            },
+            {
+              "id": "speed",
+              "label": "提供が早い"
+            },
+            {
+              "id": "late",
+              "label": "遅い時間まで使える"
+            },
+            {
+              "id": "clean",
+              "label": "清潔感がある"
+            },
+            {
+              "id": "revisit",
+              "label": "また来たい"
+            }
+          ]
+        },
+        {
+          "id": "concern",
+          "type": "multi",
+          "label": "気になったところは？",
+          "maxSelect": 2,
+          "options": [
+            {
+              "id": "noisy",
+              "label": "隣の声が気になった"
+            },
+            {
+              "id": "wait",
+              "label": "注文が通りにくかった"
+            },
+            {
+              "id": "smoke",
+              "label": "においが気になった"
+            },
+            {
+              "id": "narrow",
+              "label": "席がやや狭かった"
+            },
+            {
+              "id": "price",
+              "label": "会計が思ったより高かった"
+            },
+            {
+              "id": "slow",
+              "label": "提供に時間がかかった"
+            },
+            {
+              "id": "menu",
+              "label": "品切れが多かった"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hair_salon",
+      "label": "美容室・ヘアサロン",
+      "questions": [
+        {
+          "id": "scene",
+          "type": "single",
+          "label": "どのメニューをご利用ですか？",
+          "options": [
+            {
+              "id": "cut",
+              "label": "カット"
+            },
+            {
+              "id": "color",
+              "label": "カラー"
+            },
+            {
+              "id": "perm",
+              "label": "パーマ"
+            },
+            {
+              "id": "treatment",
+              "label": "トリートメント"
+            },
+            {
+              "id": "headspa",
+              "label": "ヘッドスパ"
+            },
+            {
+              "id": "styling",
+              "label": "セット・スタイリング"
+            }
+          ]
+        },
+        {
+          "id": "context",
+          "type": "single",
+          "label": "ご来店は？",
+          "options": [
+            {
+              "id": "first",
+              "label": "はじめて"
+            },
+            {
+              "id": "repeat",
+              "label": "何度か来ている"
+            },
+            {
+              "id": "regular",
+              "label": "いつも通っている"
+            },
+            {
+              "id": "referral",
+              "label": "人にすすめられて"
+            }
+          ]
+        },
+        {
+          "id": "good",
+          "type": "multi",
+          "label": "よかったところは？",
+          "maxSelect": 3,
+          "options": [
+            {
+              "id": "finish",
+              "label": "仕上がりが理想どおり"
+            },
+            {
+              "id": "counseling",
+              "label": "カウンセリングがていねい"
+            },
+            {
+              "id": "skill",
+              "label": "技術が高い"
+            },
+            {
+              "id": "suggest",
+              "label": "似合う提案をしてくれた"
+            },
+            {
+              "id": "talk",
+              "label": "会話が心地よい"
+            },
+            {
+              "id": "quiet",
+              "label": "静かに過ごせた"
+            },
+            {
+              "id": "clean",
+              "label": "店内がきれい"
+            },
+            {
+              "id": "relax",
+              "label": "リラックスできた"
+            },
+            {
+              "id": "time",
+              "label": "時間どおりに終わった"
+            },
+            {
+              "id": "care",
+              "label": "家での手入れも教えてくれた"
+            },
+            {
+              "id": "revisit",
+              "label": "また来たい"
+            }
+          ]
+        },
+        {
+          "id": "concern",
+          "type": "multi",
+          "label": "気になったところは？",
+          "maxSelect": 2,
+          "options": [
+            {
+              "id": "wait",
+              "label": "待ち時間があった"
+            },
+            {
+              "id": "finish_miss",
+              "label": "仕上がりが少しイメージと違った"
+            },
+            {
+              "id": "talk_much",
+              "label": "会話が少し多かった"
+            },
+            {
+              "id": "price",
+              "label": "料金が思ったより高かった"
+            },
+            {
+              "id": "long",
+              "label": "施術時間が長かった"
+            },
+            {
+              "id": "booking",
+              "label": "予約が取りにくかった"
+            },
+            {
+              "id": "push",
+              "label": "商品をすすめられた"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "beauty",
+      "label": "ネイル・まつげ・エステ",
+      "questions": [
+        {
+          "id": "scene",
+          "type": "single",
+          "label": "どのメニューをご利用ですか？",
+          "options": [
+            {
+              "id": "nail",
+              "label": "ネイル"
+            },
+            {
+              "id": "eyelash",
+              "label": "まつげ"
+            },
+            {
+              "id": "facial",
+              "label": "フェイシャル"
+            },
+            {
+              "id": "body",
+              "label": "ボディ・痩身"
+            },
+            {
+              "id": "epilation",
+              "label": "脱毛"
+            },
+            {
+              "id": "trial",
+              "label": "お試し・体験"
+            }
+          ]
+        },
+        {
+          "id": "context",
+          "type": "single",
+          "label": "ご来店は？",
+          "options": [
+            {
+              "id": "first",
+              "label": "はじめて"
+            },
+            {
+              "id": "repeat",
+              "label": "何度か来ている"
+            },
+            {
+              "id": "regular",
+              "label": "いつも通っている"
+            },
+            {
+              "id": "event",
+              "label": "予定に合わせて"
+            }
+          ]
+        },
+        {
+          "id": "good",
+          "type": "multi",
+          "label": "よかったところは？",
+          "maxSelect": 3,
+          "options": [
+            {
+              "id": "finish",
+              "label": "仕上がりに満足"
+            },
+            {
+              "id": "skill",
+              "label": "技術が高い"
+            },
+            {
+              "id": "design",
+              "label": "デザインの提案がよかった"
+            },
+            {
+              "id": "counseling",
+              "label": "相談しやすい"
+            },
+            {
+              "id": "relax",
+              "label": "リラックスできた"
+            },
+            {
+              "id": "clean",
+              "label": "店内がきれい"
+            },
+            {
+              "id": "duration",
+              "label": "もちがいい"
+            },
+            {
+              "id": "gentle",
+              "label": "痛みが少なかった"
+            },
+            {
+              "id": "privacy",
+              "label": "周りが気にならない"
+            },
+            {
+              "id": "time",
+              "label": "時間どおりに終わった"
+            },
+            {
+              "id": "revisit",
+              "label": "また来たい"
+            }
+          ]
+        },
+        {
+          "id": "concern",
+          "type": "multi",
+          "label": "気になったところは？",
+          "maxSelect": 2,
+          "options": [
+            {
+              "id": "wait",
+              "label": "待ち時間があった"
+            },
+            {
+              "id": "finish_miss",
+              "label": "仕上がりが少しイメージと違った"
+            },
+            {
+              "id": "price",
+              "label": "料金が思ったより高かった"
+            },
+            {
+              "id": "long",
+              "label": "施術時間が長かった"
+            },
+            {
+              "id": "push",
+              "label": "コースをすすめられた"
+            },
+            {
+              "id": "booking",
+              "label": "予約が取りにくかった"
+            },
+            {
+              "id": "pain",
+              "label": "少し痛みがあった"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "clinic",
+      "label": "整体・クリニック",
+      "questions": [
+        {
+          "id": "scene",
+          "type": "single",
+          "label": "どのようなご用件でしたか？",
+          "options": [
+            {
+              "id": "pain",
+              "label": "体の痛み・不調"
+            },
+            {
+              "id": "treatment",
+              "label": "治療"
+            },
+            {
+              "id": "checkup",
+              "label": "検診・定期チェック"
+            },
+            {
+              "id": "maintenance",
+              "label": "定期メンテナンス"
+            },
+            {
+              "id": "consult",
+              "label": "相談"
+            },
+            {
+              "id": "emergency",
+              "label": "急な不調"
+            }
+          ]
+        },
+        {
+          "id": "context",
+          "type": "single",
+          "label": "ご来院は？",
+          "options": [
+            {
+              "id": "first",
+              "label": "はじめて"
+            },
+            {
+              "id": "repeat",
+              "label": "何度か来ている"
+            },
+            {
+              "id": "regular",
+              "label": "かかりつけ"
+            },
+            {
+              "id": "referral",
+              "label": "人にすすめられて"
+            }
+          ]
+        },
+        {
+          "id": "good",
+          "type": "multi",
+          "label": "よかったところは？",
+          "maxSelect": 3,
+          "options": [
+            {
+              "id": "effect",
+              "label": "体が楽になった"
+            },
+            {
+              "id": "explain",
+              "label": "説明がわかりやすい"
+            },
+            {
+              "id": "skill",
+              "label": "施術・処置が的確"
+            },
+            {
+              "id": "listen",
+              "label": "不安に寄り添ってくれる"
+            },
+            {
+              "id": "gentle",
+              "label": "痛みが少なかった"
+            },
+            {
+              "id": "wait",
+              "label": "待ち時間が短い"
+            },
+            {
+              "id": "clean",
+              "label": "院内が清潔"
+            },
+            {
+              "id": "staff",
+              "label": "スタッフの対応がよい"
+            },
+            {
+              "id": "plan",
+              "label": "今後の見通しを教えてくれた"
+            },
+            {
+              "id": "booking",
+              "label": "予約が取りやすい"
+            },
+            {
+              "id": "recommend",
+              "label": "人にすすめたい"
+            }
+          ]
+        },
+        {
+          "id": "concern",
+          "type": "multi",
+          "label": "気になったところは？",
+          "maxSelect": 2,
+          "options": [
+            {
+              "id": "wait",
+              "label": "待ち時間が長かった"
+            },
+            {
+              "id": "explain_short",
+              "label": "説明がもう少しほしかった"
+            },
+            {
+              "id": "price",
+              "label": "費用が思ったより高かった"
+            },
+            {
+              "id": "booking",
+              "label": "予約が取りにくかった"
+            },
+            {
+              "id": "access",
+              "label": "場所がわかりにくかった"
+            },
+            {
+              "id": "crowd",
+              "label": "院内が混んでいた"
+            },
+            {
+              "id": "pain",
+              "label": "少し痛みがあった"
+            }
+          ]
+        }
+      ],
+      "aiHints": {
+        "avoid": [
+          "治る",
+          "完治",
+          "効果が保証",
+          "必ずよくなる",
+          "改善を約束"
+        ],
+        "note": "医療広告ガイドラインおよび施術広告の規制に触れる表現を避ける。効果効能を断定せず、体験の感想にとどめる。"
+      }
+    },
+    {
+      "id": "fitness",
+      "label": "ジム・ヨガ・フィットネス",
+      "questions": [
+        {
+          "id": "scene",
+          "type": "single",
+          "label": "何を利用されましたか？",
+          "options": [
+            {
+              "id": "gym",
+              "label": "マシン・ジム"
+            },
+            {
+              "id": "personal",
+              "label": "パーソナル指導"
+            },
+            {
+              "id": "group",
+              "label": "グループレッスン"
+            },
+            {
+              "id": "yoga",
+              "label": "ヨガ・ピラティス"
+            },
+            {
+              "id": "pool",
+              "label": "プール"
+            },
+            {
+              "id": "trial",
+              "label": "体験・見学"
+            }
+          ]
+        },
+        {
+          "id": "context",
+          "type": "single",
+          "label": "目的は？",
+          "options": [
+            {
+              "id": "diet",
+              "label": "ダイエット"
+            },
+            {
+              "id": "muscle",
+              "label": "体づくり"
+            },
+            {
+              "id": "health",
+              "label": "健康維持"
+            },
+            {
+              "id": "stress",
+              "label": "リフレッシュ"
+            },
+            {
+              "id": "posture",
+              "label": "姿勢改善"
+            },
+            {
+              "id": "rehab",
+              "label": "体のケア"
+            }
+          ]
+        },
+        {
+          "id": "good",
+          "type": "multi",
+          "label": "よかったところは？",
+          "maxSelect": 3,
+          "options": [
+            {
+              "id": "instructor",
+              "label": "指導が的確"
+            },
+            {
+              "id": "beginner",
+              "label": "初心者でも安心"
+            },
+            {
+              "id": "atmosphere",
+              "label": "通いやすい雰囲気"
+            },
+            {
+              "id": "equipment",
+              "label": "設備が充実"
+            },
+            {
+              "id": "clean",
+              "label": "館内がきれい"
+            },
+            {
+              "id": "shower",
+              "label": "シャワー・更衣室が快適"
+            },
+            {
+              "id": "access",
+              "label": "立地がよい"
+            },
+            {
+              "id": "hours",
+              "label": "時間帯が使いやすい"
+            },
+            {
+              "id": "nopush",
+              "label": "無理にすすめてこない"
+            },
+            {
+              "id": "continue",
+              "label": "続けられそう"
+            },
+            {
+              "id": "recommend",
+              "label": "人にすすめたい"
+            }
+          ]
+        },
+        {
+          "id": "concern",
+          "type": "multi",
+          "label": "気になったところは？",
+          "maxSelect": 2,
+          "options": [
+            {
+              "id": "crowd",
+              "label": "混雑していた"
+            },
+            {
+              "id": "wait",
+              "label": "マシンの順番待ちがあった"
+            },
+            {
+              "id": "price",
+              "label": "料金が思ったより高かった"
+            },
+            {
+              "id": "equipment_old",
+              "label": "設備がやや古かった"
+            },
+            {
+              "id": "hot",
+              "label": "室温が気になった"
+            },
+            {
+              "id": "locker",
+              "label": "更衣室が手狭だった"
+            },
+            {
+              "id": "guide",
+              "label": "使い方の案内がほしかった"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hotel",
+      "label": "ホテル・旅館・宿泊",
+      "questions": [
+        {
+          "id": "scene",
+          "type": "single",
+          "label": "ご旅行の目的は？",
+          "options": [
+            {
+              "id": "leisure",
+              "label": "観光"
+            },
+            {
+              "id": "business",
+              "label": "出張"
+            },
+            {
+              "id": "anniversary",
+              "label": "記念日"
+            },
+            {
+              "id": "family",
+              "label": "家族旅行"
+            },
+            {
+              "id": "stopover",
+              "label": "移動の途中"
+            },
+            {
+              "id": "workation",
+              "label": "長期滞在"
+            }
+          ]
+        },
+        {
+          "id": "context",
+          "type": "single",
+          "label": "どなたと？",
+          "options": [
+            {
+              "id": "alone",
+              "label": "ひとり"
+            },
+            {
+              "id": "couple",
+              "label": "ふたり"
+            },
+            {
+              "id": "family",
+              "label": "家族"
+            },
+            {
+              "id": "friend",
+              "label": "友人"
+            },
+            {
+              "id": "group",
+              "label": "グループ"
+            },
+            {
+              "id": "kids",
+              "label": "子ども連れ"
+            }
+          ]
+        },
+        {
+          "id": "good",
+          "type": "multi",
+          "label": "よかったところは？",
+          "maxSelect": 3,
+          "options": [
+            {
+              "id": "room",
+              "label": "部屋が快適"
+            },
+            {
+              "id": "clean",
+              "label": "清潔感がある"
+            },
+            {
+              "id": "service",
+              "label": "スタッフの対応がよい"
+            },
+            {
+              "id": "meal",
+              "label": "食事がおいしい"
+            },
+            {
+              "id": "bath",
+              "label": "お風呂がよかった"
+            },
+            {
+              "id": "view",
+              "label": "眺めがよい"
+            },
+            {
+              "id": "access",
+              "label": "立地がよい"
+            },
+            {
+              "id": "quiet",
+              "label": "静かに過ごせた"
+            },
+            {
+              "id": "amenity",
+              "label": "備品が充実"
+            },
+            {
+              "id": "checkin",
+              "label": "チェックインがスムーズ"
+            },
+            {
+              "id": "value",
+              "label": "値段のわりに満足"
+            },
+            {
+              "id": "revisit",
+              "label": "また泊まりたい"
+            }
+          ]
+        },
+        {
+          "id": "concern",
+          "type": "multi",
+          "label": "気になったところは？",
+          "maxSelect": 2,
+          "options": [
+            {
+              "id": "thin",
+              "label": "音が気になった"
+            },
+            {
+              "id": "old",
+              "label": "設備がやや古かった"
+            },
+            {
+              "id": "narrow",
+              "label": "部屋がやや狭かった"
+            },
+            {
+              "id": "wait",
+              "label": "チェックインで待った"
+            },
+            {
+              "id": "price",
+              "label": "料金が思ったより高かった"
+            },
+            {
+              "id": "meal_miss",
+              "label": "食事が期待と少し違った"
+            },
+            {
+              "id": "temp",
+              "label": "空調が気になった"
+            },
+            {
+              "id": "access_far",
+              "label": "駅から少し遠かった"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "realestate",
+      "label": "不動産・住宅",
+      "questions": [
+        {
+          "id": "scene",
+          "type": "single",
+          "label": "どんなご相談でしたか？",
+          "options": [
+            {
+              "id": "rent",
+              "label": "賃貸を探している"
+            },
+            {
+              "id": "buy",
+              "label": "購入を検討している"
+            },
+            {
+              "id": "sell",
+              "label": "売却の相談"
+            },
+            {
+              "id": "build",
+              "label": "新築・リフォーム"
+            },
+            {
+              "id": "manage",
+              "label": "管理の相談"
+            },
+            {
+              "id": "invest",
+              "label": "投資の相談"
+            }
+          ]
+        },
+        {
+          "id": "context",
+          "type": "single",
+          "label": "どの段階ですか？",
+          "options": [
+            {
+              "id": "early",
+              "label": "情報収集の段階"
+            },
+            {
+              "id": "viewing",
+              "label": "内見・見学をした"
+            },
+            {
+              "id": "decided",
+              "label": "契約まで進んだ"
+            },
+            {
+              "id": "after",
+              "label": "入居・引き渡し後"
+            }
+          ]
+        },
+        {
+          "id": "good",
+          "type": "multi",
+          "label": "よかったところは？",
+          "maxSelect": 3,
+          "options": [
+            {
+              "id": "listen",
+              "label": "希望をよく聞いてくれた"
+            },
+            {
+              "id": "knowledge",
+              "label": "知識が豊富"
+            },
+            {
+              "id": "speed",
+              "label": "対応が早い"
+            },
+            {
+              "id": "nopush",
+              "label": "無理にすすめてこない"
+            },
+            {
+              "id": "explain",
+              "label": "説明がていねい"
+            },
+            {
+              "id": "option",
+              "label": "選択肢を幅広く出してくれた"
+            },
+            {
+              "id": "honest",
+              "label": "デメリットも教えてくれた"
+            },
+            {
+              "id": "trust",
+              "label": "安心して任せられた"
+            },
+            {
+              "id": "followup",
+              "label": "その後の連絡もこまめ"
+            },
+            {
+              "id": "recommend",
+              "label": "人にすすめたい"
+            }
+          ]
+        },
+        {
+          "id": "concern",
+          "type": "multi",
+          "label": "気になったところは？",
+          "maxSelect": 2,
+          "options": [
+            {
+              "id": "slow",
+              "label": "連絡が遅いときがあった"
+            },
+            {
+              "id": "few",
+              "label": "紹介数が少なかった"
+            },
+            {
+              "id": "explain_short",
+              "label": "説明がもう少しほしかった"
+            },
+            {
+              "id": "push",
+              "label": "すすめ方が少し強かった"
+            },
+            {
+              "id": "cost",
+              "label": "費用の説明が分かりにくかった"
+            },
+            {
+              "id": "schedule",
+              "label": "日程調整がしにくかった"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
