@@ -204,4 +204,13 @@ h2 { font-size: 15px; margin: 0 0 4px; }
 
 /* ---- landing ---- */
 .landing { justify-content: center; text-align: center; padding-bottom: 16vh; }
-.landing .text-btn { margin-top: 24px; text-decoration: underline; }
+.landing.top { padding-bottom: 10vh; }
+.entry { display: grid; gap: 12px; margin-top: 24px; text-align: left; }
+.entry-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 18px; border-radius: var(--radius); text-align: left;
+  border: 1.5px solid var(--line); background: var(--surface); box-shadow: var(--shadow); color: var(--text); text-decoration: none;
+}
+.entry-card:hover { border-color: var(--accent); }
+.entry-title { font-weight: 700; font-size: 18px; color: var(--accent); }
+.entry-title::after { content: " ›"; }
+.entry-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }

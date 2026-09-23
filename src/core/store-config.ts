@@ -1,6 +1,7 @@
 import { isValidPlaceId } from "./destination";
 import type { Category, Option, QuestionId } from "./presets";
 import { CATEGORIES, NONE_ID, QUESTION_ORDER, findCategory } from "./presets";
+import { read, write } from "./storage";
 import { BANNED_WORDS } from "./validate";
 
 // 管理者ページとお客さま用ページをつなぐ「店舗設定」。
@@ -272,3 +273,21 @@ export function tokenFromHash(hash: string): string | null {
 }
 
 export const DEFAULT_CATEGORY = CATEGORIES[0].id;
+
+// 管理者ページで編集中の設定（この端末の localStorage）
+const SAVED_KEY = "qrd.admin.v1";
+
+/** 保存されていた設定。URL と同じ検査を通してから返す */
+export function loadSavedStore(): StoreDraft | null {
+  const saved = read<StoreDraft | null>(SAVED_KEY, null);
+  if (!saved) return null;
+  try {
+    return fromPayload(toPayload(saved));
+  } catch {
+    return null;
+  }
+}
+
+export function saveStore(d: StoreDraft): void {
+  write(SAVED_KEY, d);
+}

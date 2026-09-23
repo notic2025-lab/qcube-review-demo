@@ -3,7 +3,7 @@ import "./admin.css";
 import { isValidPlaceId } from "../core/destination";
 import type { QuestionId } from "../core/presets";
 import { CATEGORIES, QUESTION_ORDER, findCategory } from "../core/presets";
-import { clearHistory, loadHistory, read, write } from "../core/storage";
+import { clearHistory, loadHistory } from "../core/storage";
 import type { Issue, StoreDraft } from "../core/store-config";
 import {
   LIMITS,
@@ -11,11 +11,11 @@ import {
   decodeStore,
   draftFromPreset,
   encodeStore,
-  fromPayload,
   isQuestionEdited,
+  loadSavedStore,
   resetQuestion,
+  saveStore,
   storeUrl,
-  toPayload,
   tokenFromHash,
 } from "../core/store-config";
 import { DEMO_STORES } from "../stores";
@@ -25,7 +25,6 @@ import { downloadPng, qrSvg, saveBlob } from "./qr";
 // サーバーは無いので、設定はすべてお客さま用URL（#s=...）に入れて渡す。
 // 編集中の内容はこの端末の localStorage と、このページのURL（#s=...）に残す。
 
-const STORAGE_KEY = "qrd.admin.v1";
 const QMETA: Record<QuestionId, { no: number; role: string; kind: string }> = {
   scene: { no: 1, role: "お客さまが何を利用したか。具体的な言葉が文章に入り、口コミが自然になります。", kind: "1つ選ぶ（タップで次へ）" },
   context: { no: 2, role: "来店の状況（だれと・目的・何回目など）。文章の書き出しに使います。", kind: "1つ選ぶ（タップで次へ）" },
@@ -56,22 +55,14 @@ async function load(): Promise<StoreDraft> {
     const fromUrl = await decodeStore(token);
     if (fromUrl) return fromUrl;
   }
-  // 保存されていたものも、URL と同じ検査を通してから使う
-  const saved = read<StoreDraft | null>(STORAGE_KEY, null);
-  if (saved) {
-    try {
-      const checked = fromPayload(toPayload(saved));
-      if (checked) return checked;
-    } catch {
-      // 壊れていたら初期値
-    }
-  }
+  const saved = loadSavedStore();
+  if (saved) return saved;
   const cat = CATEGORIES[0].id;
   return draftFromPreset(cat, DEMO_STORES[cat]?.name ?? "");
 }
 
 function save() {
-  write(STORAGE_KEY, d);
+  saveStore(d);
 }
 
 // ---- 画面 -------------------------------------------------------------------
@@ -186,6 +177,7 @@ function labelOf(path: string) {
 function render() {
   root.innerHTML = `<header class="admin-head">
     <div>
+      <a class="top-link" href="${import.meta.env.BASE_URL}">‹ トップ</a>
       <p class="eyebrow">管理者ページ</p>
       <h1>口コミ下書き｜お店の設定</h1>
       <p class="muted">ここで決めた内容が、お客さま用のURLとQRコードに入ります。編集中の内容はこの端末に保存されます。</p>

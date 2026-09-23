@@ -57,4 +57,5 @@
 .warn-note { font-size: 13px; color: var(--muted); background: var(--surface-2); border-radius: 8px; padding: 8px 10px; margin: 12px 0 0; }
 
 .jump-link { margin-top: 10px; }
+.top-link { display: inline-block; font-size: 14px; color: var(--muted); text-decoration: none; margin-bottom: 8px; }
 @media (min-width: 900px) { .jump-link { display: none; } }

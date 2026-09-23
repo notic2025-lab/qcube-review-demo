@@ -5,7 +5,7 @@ import { detectInAppBrowser, detectOS, lineExternalUrl } from "./core/platform";
 import type { Answers, Category, Question } from "./core/presets";
 import { NONE_ID, findCategory } from "./core/presets";
 import { loadHistory, pushHistory } from "./core/storage";
-import { decodeStore, toCategory, tokenFromHash } from "./core/store-config";
+import { decodeStore, draftFromPreset, encodeStore, loadSavedStore, toCategory, tokenFromHash } from "./core/store-config";
 import { DEMO_STORES } from "./stores";
 
 // お客さま用ページ。お店の設定（店名・業種・投稿先・アンケート）は管理者ページが発行したURL（#s=...）から読む。
@@ -127,11 +127,23 @@ function inAppBanner() {
 
 const adminHref = () => `${import.meta.env.BASE_URL}admin/`;
 
+/** デモのトップ。お客さま用ページと管理者ページの入口 */
 function viewLanding() {
-  return `<main class="page landing">
-    <h1 tabindex="-1">お店のQRコードから開いてください</h1>
-    <p class="muted">このページは、お店に置いてあるQRコードを読み取ると、そのお店のアンケートが表示されます。</p>
-    <a class="text-btn center" href="${adminHref()}">お店の方はこちら（管理者ページ）</a>
+  return `<main class="page landing top">
+    <p class="eyebrow">デモ</p>
+    <h1 tabindex="-1">口コミ下書き生成</h1>
+    <p class="muted">見たいページを選んでください。</p>
+    <div class="entry">
+      <button class="entry-card" data-act="openCustomer">
+        <span class="entry-title">お客さま用ページ</span>
+        <span class="entry-desc">来店客がQRコードから開く画面。4つの質問に答えると口コミの下書きができます</span>
+      </button>
+      <a class="entry-card" href="${adminHref()}">
+        <span class="entry-title">管理者ページ</span>
+        <span class="entry-desc">お店の設定とアンケートを編集し、お客さま用のURLとQRコードを発行します</span>
+      </a>
+    </div>
+    <p class="fineprint">お客さま用ページは、管理者ページで最後に編集した内容で開きます（まだ編集していなければ飲食店のひな形）。</p>
   </main>`;
 }
 
@@ -397,6 +409,9 @@ function onClick(e: MouseEvent) {
   if (!el || (el as HTMLButtonElement).disabled) return;
   const act = el.dataset.act;
   switch (act) {
+    case "openCustomer":
+      void openCustomerDemo();
+      break;
     case "restart":
       st.answers = {};
       st.step = 0;
@@ -481,6 +496,14 @@ function onVisibility() {
   if (document.visibilityState === "hidden") st.wentHidden = true;
   // 投稿フォームから戻ってきた。投稿できたかどうかは分からないので「ご協力ありがとうございました」
   else if (st.wentHidden) setTimeout(() => st.screen === "handoff" && go("thanks"), 400);
+}
+
+/** トップから開くお客さま用ページ。この端末の管理者ページの設定を使う */
+async function openCustomerDemo() {
+  const cat = "restaurant";
+  const d = loadSavedStore() ?? draftFromPreset(cat, DEMO_STORES[cat]?.name ?? "");
+  // hashchange でお店を読み込む。戻るボタンでトップに戻れるよう履歴に積む
+  location.hash = `s=${await encodeStore(d)}`;
 }
 
 /**
